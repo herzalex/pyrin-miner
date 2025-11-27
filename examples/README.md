@@ -4,6 +4,19 @@ Dieses Verzeichnis enthält Beispiele und Vorlagen für verschiedene Verwendungs
 
 ## Inhalt
 
+### 💻 Code-Beispiele
+
+**`code_snippets/`** - Referenz-Implementierungen für geplante Features:
+
+| Datei | Feature | Beschreibung |
+|-------|---------|--------------|
+| `pool_failover.rs` | Multi-Pool Failover | Automatischer Pool-Wechsel bei Verbindungsproblemen |
+| `statistics.rs` | Erweiterte Statistiken | Hashrate, Shares, GPU-Telemetrie, Prometheus-Export |
+| `config_loader.rs` | Konfigurationsdatei | TOML-basierte Konfiguration mit Validierung |
+| `web_api.rs` | Web-Dashboard | REST API und WebSocket für Echtzeit-Monitoring |
+
+Siehe `code_snippets/README.md` für detaillierte Dokumentation.
+
 ### 📋 Konfigurationsdatei
 
 **`config_example.toml`** - Vollständige Beispiel-Konfigurationsdatei mit allen verfügbaren Optionen.
