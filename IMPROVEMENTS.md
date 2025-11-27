@@ -460,10 +460,11 @@ services:
 
 ### Zu behebende Issues
 
-1. **Unsichere statische Variable in `stratum.rs`**
+1. **~~Unsichere statische Variable in `stratum.rs`~~** ✅ **BEHOBEN**
    ```rust
-   // Zeile 50: static mut SHARE_STATS: Option<Arc<ShareStats>> = None;
-   // Sollte durch thread-safe Alternative ersetzt werden
+   // Vorher (Zeile 50): static mut SHARE_STATS: Option<Arc<ShareStats>> = None;
+   // Jetzt: static SHARE_STATS: OnceLock<Arc<ShareStats>> = OnceLock::new();
+   // Thread-safe mit OnceLock ersetzt
    ```
 
 2. **Hardcodierte DevFund Adresse**
@@ -471,16 +472,22 @@ services:
    // cli.rs:56 und main.rs:112 - Sollte konfigurierbar sein
    ```
 
-3. **Fehlende Tests**
+3. **~~check_pow() Funktion in `pow.rs`~~** ✅ **BEHOBEN**
+   ```rust
+   // Vorher: Immer true zurückgegeben (Zeile 140-145)
+   // Jetzt: Korrekte Prüfung: pow <= self.target
+   ```
+
+4. **Fehlende Tests**
    - Stratum Codec Tests
    - GPU Worker Integration Tests
    - Pool Failover Tests
 
-4. **Veraltete Dependencies**
+5. **Veraltete Dependencies**
    - Einige Dependencies könnten auf neuere Versionen aktualisiert werden
    - clap 3.0 → clap 4.x Migration
 
-5. **Inkonsistente Error Handling**
+6. **Inkonsistente Error Handling**
    - Mischung von `Result`, `Option`, und Panics
    - Einheitliches Error-Handling Pattern einführen
 
@@ -490,9 +497,10 @@ services:
 
 ### Phase 1: Stabilität und Monitoring (4-6 Wochen)
 1. ✅ Projekt-Analyse
-2. Web Dashboard (2-3 Wochen)
-3. Erweiterte Statistiken (1-2 Wochen)
-4. Konfigurationsdatei Support (1 Woche)
+2. ✅ Kritische Sicherheitsfixes (unsafe static, check_pow)
+3. Web Dashboard (2-3 Wochen)
+4. Erweiterte Statistiken (1-2 Wochen)
+5. Konfigurationsdatei Support (1 Woche)
 
 ### Phase 2: Zuverlässigkeit (3-4 Wochen)
 1. Multi-Pool Support mit Failover (1-2 Wochen)
