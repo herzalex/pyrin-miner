@@ -1,0 +1,127 @@
+# =============================================================================
+# Pyrin-Miner Docker Compose Konfiguration
+# =============================================================================
+# Verwendung:
+#   1. Kopiere diese Datei in dein Arbeitsverzeichnis
+#   2. Passe MINING_ADDRESS an
+#   3. Führe aus: docker-compose up -d
+#
+# Voraussetzungen:
+#   - Docker mit docker-compose
+#   - NVIDIA Container Toolkit (für GPU-Mining)
+#   - nvidia-docker2 Package
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # Pyrin Miner mit CUDA GPU-Support
+  # ==========================================================================
+  pyrin-miner:
+    image: pyrin-miner:cuda
+    container_name: pyrin-miner
+    restart: unless-stopped
+    
+    # GPU-Zuweisung
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all  # oder spezifische Anzahl: count: 2
+              capabilities: [gpu]
+    
+    # Umgebungsvariablen
+    environment:
+      # Mining-Adresse (ERFORDERLICH - MUSS angepasst werden!)
+      - MINING_ADDRESS=REPLACE_WITH_YOUR_PYRIN_ADDRESS
+      
+      # Node-Verbindung
+      - PYRIN_NODE=127.0.0.1
+      - PYRIN_PORT=13110
+      
+      # GPU-Einstellungen
+      - CUDA_WORKLOAD=64
+      
+      # Logging
+      - RUST_LOG=info
+    
+    # Command mit allen Optionen
+    command: >
+      --mining-address ${MINING_ADDRESS:-REPLACE_WITH_YOUR_PYRIN_ADDRESS}
+      --pyrin-address ${PYRIN_NODE:-127.0.0.1}
+      --port ${PYRIN_PORT:-13110}
+      --cuda-workload ${CUDA_WORKLOAD:-64}
+    
+    # Volumes
+    volumes:
+      # Konfigurationsdatei (optional, für zukünftige Config-File-Unterstützung)
+      - ./config:/home/miner/config:ro
+      # Logs
+      - ./logs:/home/miner/logs
+    
+    # Netzwerk
+    network_mode: host  # Oder: nutze bridge mit entsprechenden Ports
+    
+    # Logging
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+    
+    # Gesundheitscheck
+    healthcheck:
+      test: ["CMD", "pgrep", "pyrin-miner"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ==========================================================================
+  # Optional: Prometheus für Metriken (ZUKÜNFTIG)
+  # ==========================================================================
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #     - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+  #     - '--web.console.templates=/usr/share/prometheus/consoles'
+
+  # ==========================================================================
+  # Optional: Grafana für Dashboard (ZUKÜNFTIG)
+  # ==========================================================================
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #     - GF_USERS_ALLOW_SIGN_UP=false
+
+# =============================================================================
+# Volumes (für optionale Services - auskommentiert wenn nicht benötigt)
+# =============================================================================
+# volumes:
+#   prometheus_data:
+#   grafana_data:
+
+# =============================================================================
+# Netzwerke (optional, wenn nicht host-mode)
+# =============================================================================
+# networks:
+#   mining:
+#     driver: bridge

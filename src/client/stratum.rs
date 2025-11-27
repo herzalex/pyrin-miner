@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::pin::Pin;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
@@ -47,7 +47,8 @@ pub struct ShareStats {
     pub shares_pending: Mutex<HashMap<u32, String>>,
 }
 
-static mut SHARE_STATS: Option<Arc<ShareStats>> = None;
+/// Thread-safe global share statistics using OnceLock
+static SHARE_STATS: OnceLock<Arc<ShareStats>> = OnceLock::new();
 
 impl Display for ShareStats {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -189,12 +190,8 @@ impl StratumHandler {
         let (sink, stream) = client.split();
         tokio::spawn(async move { ReceiverStream::new(recv).map(Ok).forward(sink).await });
 
-        let share_state = unsafe {
-            if SHARE_STATS.is_none() {
-                SHARE_STATS = Some(Arc::new(ShareStats::default()));
-            }
-            SHARE_STATS.clone().unwrap()
-        };
+        // Thread-safe initialization using OnceLock
+        let share_state = SHARE_STATS.get_or_init(|| Arc::new(ShareStats::default())).clone();
         let last_stratum_id = Arc::new(AtomicU32::new(0));
         let (block_channel, block_handle) = Self::create_block_channel(
             send_channel.clone(),
