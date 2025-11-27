@@ -1,0 +1,109 @@
+# =============================================================================
+# Pyrin-Miner Docker Image mit NVIDIA CUDA Support
+# =============================================================================
+# Dieses Dockerfile erstellt ein Image mit voller NVIDIA GPU-Unterstützung
+# 
+# Build:
+#   docker build -f Dockerfile.cuda -t pyrin-miner:cuda .
+#   docker build -f Dockerfile.cuda --build-arg CUDA_VERSION=12.0.0 -t pyrin-miner:cuda12 .
+#
+# Run:
+#   docker run --gpus all pyrin-miner:cuda -a pyrin:qzYOUR_ADDRESS
+# =============================================================================
+
+# Globales CUDA Version Build-Argument
+ARG CUDA_VERSION=11.8.0
+
+# Stage 1: Build mit CUDA
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04 AS builder
+
+# CUDA Version für spätere Verwendung speichern
+ARG CUDA_VERSION
+
+# Verhindere interaktive Prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Installiere Build-Abhängigkeiten
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    protobuf-compiler \
+    libprotobuf-dev \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installiere Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+WORKDIR /app
+
+# Kopiere nur die Cargo-Dateien zuerst für besseres Caching
+COPY Cargo.toml Cargo.lock ./
+COPY plugins/cuda/Cargo.toml plugins/cuda/
+COPY plugins/opencl/Cargo.toml plugins/opencl/
+
+# Erstelle Dummy-Dateien für Abhängigkeits-Caching
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    mkdir -p src/client && \
+    echo "" > src/lib.rs && \
+    mkdir -p plugins/cuda/src && \
+    echo "fn main() {}" > plugins/cuda/src/lib.rs && \
+    mkdir -p plugins/opencl/src && \
+    echo "fn main() {}" > plugins/opencl/src/lib.rs
+
+# Baue nur die Abhängigkeiten
+RUN cargo build --release || true
+RUN rm -rf src plugins
+
+# Kopiere den echten Quellcode
+COPY . .
+
+# Baue die vollständige Anwendung mit CUDA-Support
+RUN cargo build --release --all
+
+# Stage 2: Runtime mit CUDA
+ARG CUDA_VERSION
+FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu22.04
+
+# Installiere Runtime-Abhängigkeiten
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Erstelle einen nicht-root Benutzer
+RUN useradd -m -s /bin/bash miner
+USER miner
+WORKDIR /home/miner
+
+# Kopiere das Binary
+COPY --from=builder /app/target/release/pyrin-miner /usr/local/bin/
+
+# Kopiere CUDA Plugin
+COPY --from=builder /app/target/release/libpyrincuda.so /usr/local/lib/
+
+# Setze Library Path
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+# Erstelle Verzeichnisse für Konfiguration und Logs
+RUN mkdir -p /home/miner/config /home/miner/logs
+
+# Volume für Konfiguration und Logs
+VOLUME ["/home/miner/config", "/home/miner/logs"]
+
+# NVIDIA Container Toolkit Labels
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+LABEL maintainer="pyrin-miner"
+
+# Gesundheitscheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD pgrep pyrin-miner || exit 1
+
+# Entrypoint
+ENTRYPOINT ["pyrin-miner"]
+
+# Standardargumente
+CMD ["--help"]

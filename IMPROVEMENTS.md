@@ -529,6 +529,32 @@ Die wichtigsten Verbesserungen sind:
 
 ---
 
+## Beispiele und Vorlagen
+
+Im Verzeichnis `examples/` finden Sie praktische Vorlagen:
+
+| Datei | Beschreibung |
+|-------|--------------|
+| `config_example.toml` | Vollständige Konfigurationsdatei-Vorlage |
+| `docker/Dockerfile` | Docker-Image für OpenCL-Mining |
+| `docker/Dockerfile.cuda` | Docker-Image mit NVIDIA CUDA |
+| `docker/docker-compose.yml` | Docker Compose für einfaches Deployment |
+| `README.md` | Dokumentation für alle Beispiele |
+
+### Schnellstart mit Docker
+
+```bash
+# Image bauen
+docker build -t pyrin-miner:cuda -f examples/docker/Dockerfile.cuda .
+
+# Container starten
+docker run --gpus all pyrin-miner:cuda \
+  --mining-address pyrin:qzYOUR_ADDRESS_HERE \
+  --pyrin-address 192.168.1.100
+```
+
+---
+
 ## Beitragen
 
 Wenn Sie zu einem dieser Features beitragen möchten:

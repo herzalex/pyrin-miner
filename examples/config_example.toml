@@ -1,0 +1,219 @@
+# Pyrin-Miner Beispiel-Konfigurationsdatei
+# Diese Datei zeigt das vorgeschlagene Konfigurationsformat
+
+# =============================================================================
+# Mining Grundeinstellungen
+# =============================================================================
+[miner]
+# Die Pyrin-Wallet-Adresse für Mining-Belohnungen (ERFORDERLICH)
+address = "REPLACE_WITH_YOUR_PYRIN_ADDRESS"
+
+# Anzahl der CPU-Threads (0 = nur GPU, Standard: 0)
+threads = 0
+
+# Mining auch wenn Node nicht synchronisiert ist (Standard: false)
+mine_when_not_synced = false
+
+# =============================================================================
+# Netzwerk-Einstellungen
+# =============================================================================
+[network]
+# Node-Adresse (Standard: 127.0.0.1)
+node_address = "127.0.0.1"
+
+# Port (Standard: 13110 für Mainnet, 16211 für Testnet)
+port = 13110
+
+# Protokoll: "grpc" oder "stratum"
+protocol = "grpc"
+
+# Testnet aktivieren (Standard: false)
+testnet = false
+
+# =============================================================================
+# Pool-Konfiguration (für Stratum-Mining)
+# =============================================================================
+[pools]
+# Failover-Timeout in Sekunden
+failover_timeout = 30
+
+# Maximale Wiederholungsversuche pro Pool
+max_retries = 5
+
+# Primärer Pool
+[[pools.servers]]
+address = "pool.pyrin.network"
+port = 3333
+weight = 100  # Höhere Gewichtung = mehr Priorität
+
+# Backup Pool 1
+[[pools.servers]]
+address = "backup1.pyrin.network"
+port = 3333
+weight = 50
+
+# Backup Pool 2
+[[pools.servers]]
+address = "backup2.pyrin.network"
+port = 3333
+weight = 25
+
+# =============================================================================
+# CUDA GPU-Einstellungen (NVIDIA)
+# =============================================================================
+[gpu.cuda]
+# CUDA aktivieren (Standard: true, wenn verfügbar)
+enabled = true
+
+# Spezifische GPU-IDs (leer = alle verfügbaren GPUs)
+devices = [0, 1]
+
+# Workload pro GPU (Standard: 64)
+# Höhere Werte = mehr Hash-Leistung, aber mehr Speicher/Power
+workload = [64, 64]
+
+# Workload ist absolut, nicht relativ (Standard: false)
+workload_absolute = false
+
+# Blocking Sync deaktivieren (Standard: false)
+# Erhöht CPU-Nutzung, aber weniger "red blocks"
+no_blocking_sync = false
+
+# =============================================================================
+# CUDA Overclocking (optional, erfordert Admin-Rechte)
+# =============================================================================
+[gpu.cuda.overclock]
+# Core Clock Lock in MHz (0 = kein Lock)
+core_clocks = [1200, 1200]
+
+# Memory Clock Lock in MHz (0 = kein Lock)
+mem_clocks = [810, 810]
+
+# Power Limit in Watt
+power_limits = [150, 150]
+
+# =============================================================================
+# OpenCL GPU-Einstellungen (AMD/Intel)
+# =============================================================================
+[gpu.opencl]
+# OpenCL aktivieren (Standard: false)
+enabled = true
+
+# OpenCL-Plattform-ID
+platform = 0
+
+# Spezifische GPU-IDs (leer = alle auf Plattform)
+devices = [0]
+
+# Workload (Standard: 512)
+workload = [512]
+
+# AMD-GPUs deaktivieren (Standard: false)
+amd_disable = false
+
+# Experimentelle AMD SIMD-Instruktionen (Standard: false)
+# WARNUNG: Kann zu Abstürzen führen, wenn nicht unterstützt
+experimental_amd = false
+
+# =============================================================================
+# Monitoring und Dashboard (ZUKÜNFTIG)
+# =============================================================================
+[monitoring]
+# Web-Dashboard aktivieren
+web_dashboard = true
+
+# Web-Server Port
+web_port = 8080
+
+# Web-Server Bind-Adresse
+web_bind = "0.0.0.0"
+
+# REST API aktivieren
+api_enabled = true
+
+# API-Authentifizierung (leer = keine Authentifizierung)
+api_key = ""
+
+# Prometheus Metrics Endpoint aktivieren
+prometheus_enabled = true
+prometheus_port = 9090
+
+# =============================================================================
+# Benachrichtigungen (ZUKÜNFTIG)
+# =============================================================================
+[notifications]
+# Benachrichtigung bei Block-Fund
+on_block_found = true
+
+# Benachrichtigung bei Verbindungsproblemen
+on_connection_lost = true
+
+# Benachrichtigung bei GPU-Fehler
+on_gpu_error = true
+
+# Temperatur-Warnung aktivieren
+temperature_warning = true
+temperature_threshold = 80  # Celsius
+
+# Desktop-Benachrichtigungen (Windows/Linux)
+desktop_notifications = true
+
+# Webhook-URL für externe Benachrichtigungen (z.B. Discord, Telegram)
+webhook_url = ""
+
+# =============================================================================
+# Logging
+# =============================================================================
+[logging]
+# Log-Level: "error", "warn", "info", "debug", "trace"
+level = "info"
+
+# Log-Datei (leer = nur Konsole)
+file = ""
+
+# Log-Rotation Größe in MB (0 = keine Rotation)
+max_size_mb = 100
+
+# Anzahl der aufzubewahrenden Log-Dateien
+max_files = 5
+
+# Farbige Konsolenausgabe (Standard: true)
+colored = true
+
+# =============================================================================
+# Profitabilität (ZUKÜNFTIG)
+# =============================================================================
+[profitability]
+# Stromkosten pro kWh
+electricity_cost = 0.10
+
+# Währung für Berechnungen
+currency = "EUR"
+
+# Automatische Preis-Updates aktivieren
+auto_price_update = true
+
+# Preis-Update Intervall in Minuten
+price_update_interval = 15
+
+# =============================================================================
+# Erweiterte Einstellungen
+# =============================================================================
+[advanced]
+# Nonce-Generator: "lean" oder "xoshiro"
+nonce_gen = "lean"
+
+# Automatische Workload-Anpassung bei Überhitzung
+adaptive_workload = true
+
+# GPU-Cooldown-Periode in Sekunden
+cooldown_period = 30
+
+# Maximale GPU-Temperatur (bei Überschreitung wird Workload reduziert)
+max_gpu_temperature = 85
+
+# Automatischer Neustart bei Fehler
+auto_restart = true
+
+# Neustart-Verzögerung in Sekunden
+restart_delay = 10
